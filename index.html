@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Haftalik Rejalashtiruvchi</title>
+<link rel="manifest" href="manifest.webmanifest"/>
+<meta name="theme-color" content="#0d0f14"/>
+<link rel="icon" href="icon-192.png"/>
+<link rel="apple-touch-icon" href="icon-192.png"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0d0f14;
+    --bg2: #13161e;
+    --bg3: #1a1d28;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.13);
+    --text: #f0f0f5;
+    --text2: #8b8fa8;
+    --text3: #555870;
+    --accent: #4ade80;
+    --accent2: #22d3ee;
+    --accent3: #f472b6;
+    --accent-dim: rgba(74,222,128,0.12);
+    --card-shadow: 0 1px 24px rgba(0,0,0,0.4);
+    --font: 'Sora', sans-serif;
+    --mono: 'DM Mono', monospace;
+  }
+  html { font-size: 16px; scroll-behavior: smooth; }
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 0;
+    overflow-x: hidden;
+  }
+  /* BG pattern */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(ellipse 600px 400px at 10% 20%, rgba(74,222,128,0.04) 0%, transparent 70%),
+      radial-gradient(ellipse 400px 600px at 90% 80%, rgba(34,211,238,0.04) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .page { position: relative; z-index: 1; max-width: 1280px; margin: 0 auto; padding: 32px 24px 60px; }
+
+  /* HEADER */
+  .header { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; margin-bottom: 32px; flex-wrap: wrap; }
+
+  .logo { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+  .logo-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 10px var(--accent); }
+  .logo-text { font-size: 13px; font-weight: 500; color: var(--accent); letter-spacing: 0.12em; text-transform: uppercase; font-family: var(--mono); }
+  .page-title { font-size: 32px; font-weight: 700; color: var(--text); letter-spacing: -0.02em; line-height: 1.1; }
+  .week-range { font-size: 13px; color: var(--text3); margin-top: 6px; font-family: var(--mono); }
+  .header-right { display: flex; flex-direction: column; gap: 10px; align-items: flex-end; }
+  .focus-input-wrap { display: flex; align-items: center; gap: 10px; background: var(--bg3); border: 0.5px solid var(--border2); border-radius: 12px; padding: 10px 16px; min-width: 300px; }
+  .focus-icon { font-size: 16px; color: var(--accent); flex-shrink: 0; }
+  .focus-input-wrap input { background: transparent; border: none; outline: none; font-family: var(--font); font-size: 13px; color: var(--text); width: 100%; }
+  .focus-input-wrap input::placeholder { color: var(--text3); }
+  .affirmation { font-size: 12px; color: var(--text2); font-style: italic; background: rgba(74,222,128,0.06); border: 0.5px solid rgba(74,222,128,0.15); border-radius: 8px; padding: 7px 12px; max-width: 300px; text-align: right; line-height: 1.5; }
+
+  /* ACTIONS */
+  .actions { display: flex; gap: 10px; margin-bottom: 28px; }
+  .btn { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font); font-size: 12px; font-weight: 500; padding: 8px 18px; border-radius: 8px; cursor: pointer; border: 0.5px solid var(--border2); background: transparent; color: var(--text2); transition: all 0.2s; letter-spacing: 0.02em; }
+  .btn:hover { background: var(--bg3); color: var(--text); border-color: var(--border2); }
+  .btn.save { border-color: rgba(74,222,128,0.4); color: var(--accent); }
+  .btn.save:hover { background: var(--accent-dim); }
+  .btn.clear:hover { border-color: rgba(244,114,182,0.4); color: var(--accent3); }
+
+  /* STATS */
+  .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 28px; }
+  .stat-card { background: var(--bg2); border: 0.5px solid var(--border); border-radius: 14px; padding: 18px 20px; }
+  .stat-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; font-family: var(--mono); }
+  .stat-val { font-size: 28px; font-weight: 700; color: var(--text); line-height: 1; font-family: var(--mono); }
+  .stat-val.green { color: var(--accent); }
+  .stat-val.cyan { color: var(--accent2); }
+  .stat-sub { font-size: 11px; color: var(--text3); margin-top: 4px; }
+
+  /* BAR CHART */
+  .chart-section { background: var(--bg2); border: 0.5px solid var(--border); border-radius: 16px; padding: 20px 24px; margin-bottom: 28px; }
+  .chart-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .chart-title { font-size: 12px; font-weight: 500; color: var(--text2); text-transform: uppercase; letter-spacing: 0.1em; font-family: var(--mono); }
+  .bars { display: flex; align-items: flex-end; gap: 8px; height: 90px; }
+  .bar-col { display: flex; flex-direction: column; align-items: center; gap: 6px; flex: 1; height: 100%; justify-content: flex-end; }
+  .bar-fill { width: 100%; border-radius: 4px 4px 0 0; background: var(--bg3); border: 0.5px solid var(--border); min-height: 4px; transition: height 0.5s cubic-bezier(.4,0,.2,1); position: relative; overflow: hidden; }
+  .bar-fill::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, transparent 100%); }
+  .bar-fill.has-data { background: rgba(74,222,128,0.2); border-color: rgba(74,222,128,0.3); }
+  .bar-fill.today-bar { background: rgba(74,222,128,0.5); border-color: var(--accent); box-shadow: 0 0 12px rgba(74,222,128,0.3); }
+  .bar-lbl { font-size: 10px; color: var(--text3); font-family: var(--mono); }
+  .bar-lbl.today-lbl { color: var(--accent); }
+
+  /* DAYS GRID */
+  .days-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; }
+  @media (max-width: 1100px) { .days-grid { grid-template-columns: repeat(4, 1fr); } }
+  @media (max-width: 700px) { .days-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 400px) { .days-grid { grid-template-columns: 1fr; } }
+
+  .day-card {
+    background: var(--bg2);
+    border: 0.5px solid var(--border);
+    border-radius: 16px;
+    padding: 14px 14px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    transition: border-color 0.2s;
+    animation: fadeUp 0.4s ease both;
+  }
+  .day-card:hover { border-color: var(--border2); }
+  .day-card.today-card { border-color: rgba(74,222,128,0.4); box-shadow: 0 0 0 1px rgba(74,222,128,0.08), var(--card-shadow); }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .day-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+  .day-name { font-size: 11px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.08em; font-family: var(--mono); }
+  .day-name.today-name { color: var(--accent); }
+  .day-date { font-size: 10px; color: var(--text3); font-family: var(--mono); }
+  .today-badge { font-size: 9px; background: var(--accent-dim); color: var(--accent); border: 0.5px solid rgba(74,222,128,0.25); border-radius: 20px; padding: 2px 8px; font-family: var(--mono); letter-spacing: 0.05em; }
+
+  .donut-center { display: flex; justify-content: center; margin: 8px 0 12px; }
+
+  .tasks-list { list-style: none; flex: 1; }
+  .task-row { display: flex; align-items: flex-start; gap: 7px; margin-bottom: 6px; cursor: pointer; }
+  .task-check { width: 14px; height: 14px; border: 0.5px solid var(--border2); border-radius: 3px; flex-shrink: 0; margin-top: 1px; display: flex; align-items: center; justify-content: center; font-size: 9px; transition: all 0.15s; }
+  .task-check.checked { background: var(--accent); border-color: var(--accent); color: #0d0f14; font-weight: 700; }
+  .task-text { font-size: 11px; color: var(--text2); line-height: 1.4; transition: color 0.15s; }
+  .task-row.done .task-text { text-decoration: line-through; color: var(--text3); }
+  .task-row:hover .task-text { color: var(--text); }
+
+  .add-row { display: flex; gap: 6px; margin-top: 10px; }
+  .add-input { flex: 1; background: var(--bg3); border: 0.5px solid var(--border); border-radius: 7px; padding: 5px 9px; font-family: var(--font); font-size: 11px; color: var(--text); outline: none; transition: border-color 0.15s; }
+  .add-input::placeholder { color: var(--text3); }
+  .add-input:focus { border-color: rgba(74,222,128,0.3); }
+  .add-btn { background: var(--bg3); border: 0.5px solid var(--border); border-radius: 7px; padding: 5px 9px; cursor: pointer; color: var(--text3); font-size: 13px; transition: all 0.15s; }
+  .add-btn:hover { border-color: rgba(74,222,128,0.35); color: var(--accent); }
+
+  .task-row { position: relative; padding: 3px 4px; border-radius: 6px; border-left: 2px solid transparent; }
+  .task-row.now { background: rgba(34,211,238,0.07); border-left-color: var(--accent2); }
+  .task-time { font-family: var(--mono); font-size: 10px; color: var(--accent2); background: rgba(34,211,238,0.08); border-radius: 4px; padding: 1px 5px; flex-shrink: 0; margin-top: 0; }
+  .task-time.none { color: var(--text3); background: transparent; }
+  .task-row.done .task-time { color: var(--text3); background: transparent; }
+  .task-del { margin-left: auto; opacity: 0; color: var(--text3); font-size: 12px; padding: 0 2px; }
+  .task-row:hover .task-del { opacity: 1; }
+  .task-del:hover { color: var(--accent3); }
+  .add-box { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+  .add-box .add-row { margin-top: 0; }
+  .time-input { background: var(--bg3); border: 0.5px solid var(--border); border-radius: 7px; padding: 5px 9px; font-family: var(--mono); font-size: 11px; color: var(--text); outline: none; color-scheme: dark; width: 100%; }
+  .time-input:focus { border-color: rgba(34,211,238,0.4); }
+  .next-box { background: var(--bg2); border: 0.5px solid rgba(34,211,238,0.25); border-radius: 14px; padding: 14px 20px; margin-bottom: 28px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .next-label { font-size: 10px; color: var(--accent2); text-transform: uppercase; letter-spacing: 0.1em; font-family: var(--mono); }
+  .next-text { font-size: 14px; color: var(--text); }
+  .next-time { font-family: var(--mono); font-size: 18px; color: var(--accent2); }
+
+  .nav-grp { display: flex; gap: 8px; margin-left: auto; }
+  .btn:disabled { opacity: .35; cursor: default; }
+  .btn.alarm.off { color: var(--text3); }
+  .sound-sel { background: var(--bg3); color: var(--text2); border: 0.5px solid var(--border2); border-radius: 8px; padding: 8px 10px; font-family: var(--font); font-size: 12px; outline: none; cursor: pointer; }
+  .time-row { display: flex; align-items: center; gap: 5px; }
+  .time-row span { color: var(--text3); font-size: 11px; }
+  .task-row.has-end .task-text { order: 3; flex-basis: 100%; padding-left: 21px; }
+  .task-row { flex-wrap: wrap; }
+  /* FLIP CLOCK */
+  .clock { --h: clamp(110px, 24vw, 190px); background: var(--bg2); border: 0.5px solid var(--border); border-radius: 16px; padding: 28px 16px 20px; margin-bottom: 28px; display: flex; flex-direction: column; align-items: center; gap: 18px; }
+  .clock:fullscreen { --h: clamp(160px, 34vw, 380px); background: var(--bg); justify-content: center; }
+  .clock-row { display: flex; gap: calc(var(--h) * .09); }
+  .fc { position: relative; width: calc(var(--h) * .95); height: var(--h); perspective: 700px; font-family: var(--mono); font-size: calc(var(--h) * .76); font-weight: 500; }
+  .fc::after { content: ''; position: absolute; left: 0; right: 0; top: calc(50% - 1px); height: 2px; background: var(--bg); z-index: 5; }
+  .fc > div:not(.ampm) { position: absolute; left: 0; right: 0; height: 50%; overflow: hidden; background: #1a1d28; color: var(--text); display: flex; justify-content: center; align-items: flex-start; backface-visibility: hidden; }
+  .fc > div:not(.ampm) span { display: block; line-height: var(--h); height: var(--h); }
+  .fc-top, .fc-flip-top { top: 0; border-radius: calc(var(--h) * .08) calc(var(--h) * .08) 0 0; }
+  .fc-bot, .fc-flip-bot { bottom: 0; border-radius: 0 0 calc(var(--h) * .08) calc(var(--h) * .08); }
+  .fc-bot span, .fc-flip-bot span { margin-top: calc(var(--h) / -2); }
+  .fc-flip-top { transform-origin: bottom; visibility: hidden; z-index: 3; }
+  .fc-flip-bot { transform-origin: top; visibility: hidden; z-index: 3; transform: rotateX(90deg); }
+  .fc.go .fc-flip-top { visibility: visible; animation: flipTop .3s ease-in forwards; }
+  .fc.go .fc-flip-bot { visibility: visible; animation: flipBot .3s ease-out .3s forwards; }
+  @keyframes flipTop { to { transform: rotateX(-90deg); } }
+  @keyframes flipBot { to { transform: rotateX(0); } }
+  .ampm { position: absolute; left: 12px; bottom: 10px; font-size: 13px; color: var(--text3); z-index: 6; font-family: var(--mono); letter-spacing: .05em; }
+  .clock-label { font-size: 12px; letter-spacing: .22em; text-transform: uppercase; color: var(--text2); text-align: center; max-width: 90%; }
+  .clock-row { cursor: pointer; }
+  .clock:-webkit-full-screen { --h: clamp(160px, 34vw, 380px); background: var(--bg); justify-content: center; }
+  .clock.fake-fs { position: fixed; inset: 0; z-index: 900; border-radius: 0; margin: 0; border: none; overflow-y: auto; justify-content: center; --h: clamp(150px, 32vw, 380px); background: var(--bg); }
+  .clock-modes, .chips, .t-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; align-items: center; }
+  .pill { background: var(--bg3); border: 0.5px solid var(--border2); color: var(--text2); border-radius: 20px; padding: 6px 14px; font-family: var(--font); font-size: 12px; cursor: pointer; transition: all .15s; }
+  .pill:hover { color: var(--text); }
+  .pill.active { color: var(--accent); border-color: rgba(74,222,128,.4); background: var(--accent-dim); }
+  .timer-ctl { display: none; flex-direction: column; gap: 12px; align-items: center; }
+  .timer-ctl.show { display: flex; }
+  #t-min { width: 72px; text-align: center; }
+  .data-box { margin-top: 28px; background: var(--bg2); border: 0.5px solid var(--border); border-radius: 16px; padding: 18px 20px; display: flex; flex-direction: column; gap: 12px; }
+  .data-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .hint { font-size: 11px; color: var(--text3); align-self: center; }
+  .actions { flex-wrap: wrap; }
+  .rendered .day-card { animation: none; }
+  .task-bell { font-size: 10px; opacity: .8; margin-left: auto; }
+  .task-bell.off { opacity: .4; }
+  .task-del { margin-left: 4px; }
+  .modal { position: fixed; inset: 0; background: rgba(0,0,0,.7); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+  .modal.show { display: flex; }
+  .modal-box { background: var(--bg2); border: 1px solid var(--accent2); border-radius: 20px; padding: 32px 28px; text-align: center; max-width: 360px; width: 100%; box-shadow: 0 0 60px rgba(34,211,238,.25); animation: ring .5s ease-in-out infinite alternate; }
+  @keyframes ring { from { transform: rotate(-1.5deg); } to { transform: rotate(1.5deg); } }
+  .modal-emoji { font-size: 44px; }
+  .modal-time { font-family: var(--mono); font-size: 34px; color: var(--accent2); margin: 6px 0; }
+  .modal-text { font-size: 16px; margin-bottom: 22px; word-break: break-word; }
+  .modal-actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+
+  /* TOAST */
+  .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--bg3); border: 0.5px solid rgba(74,222,128,0.3); border-radius: 10px; padding: 10px 20px; font-size: 13px; color: var(--accent); font-family: var(--mono); z-index: 999; transition: transform 0.3s cubic-bezier(.4,0,.2,1), opacity 0.3s; opacity: 0; }
+  .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+  /* Stagger animation for cards */
+  .day-card:nth-child(1) { animation-delay: 0.05s; }
+  .day-card:nth-child(2) { animation-delay: 0.1s; }
+  .day-card:nth-child(3) { animation-delay: 0.15s; }
+  .day-card:nth-child(4) { animation-delay: 0.2s; }
+  .day-card:nth-child(5) { animation-delay: 0.25s; }
+  .day-card:nth-child(6) { animation-delay: 0.3s; }
+  .day-card:nth-child(7) { animation-delay: 0.35s; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--bg3); border-radius: 3px; }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="header">
+    <div class="header-left">
+      <div class="logo"><div class="logo-dot"></div><span class="logo-text">Planner</span></div>
+      <div class="page-title">Haftalik Rejalashtiruvchi</div>
+      <div class="week-range" id="week-range"></div>
+    </div>
+    <div class="header-right">
+      <div class="focus-input-wrap">
+        <span class="focus-icon">🎯</span>
+        <input id="weekly-focus" placeholder="Bu haftaning asosiy maqsadi..."/>
+      </div>
+      <div class="affirmation" id="affirmation"></div>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="btn save" onclick="saveAll()">💾 &nbsp;Saqlash</button>
+    <button class="btn clear" onclick="clearAll()">🗑 &nbsp;Tozalash</button>
+    <button class="btn alarm" id="alarm-btn" onclick="toggleAlarm()">🔔 &nbsp;Budilnik: yoqilgan</button>
+    <select class="sound-sel" id="sound-sel" onchange="setSound(this.value)" title="Budilnik ovozi"></select>
+    <button class="btn" onclick="document.getElementById('audio-file').click()">📁 &nbsp;Audio yuklash</button>
+    <input type="file" id="audio-file" accept="audio/*" hidden onchange="loadCustom(this.files[0]);this.value=''"/>
+    <div class="nav-grp">
+      <button class="btn" id="prev-btn" onclick="setWeek(weekOffset-1)">‹ Oldingi</button>
+      <button class="btn" onclick="setWeek(0)">Bugun</button>
+      <button class="btn" id="next-btn" onclick="setWeek(weekOffset+1)">Keyingi ›</button>
+    </div>
+    <div class="hint" style="width:100%">⚠ Budilnik faqat sahifa ochiq turganda ishlaydi. Bir oygacha (5 hafta) oldindan reja tuzishingiz mumkin.</div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-label">Jami vazifalar</div><div class="stat-val" id="s-total">0</div><div class="stat-sub">bu hafta</div></div>
+    <div class="stat-card"><div class="stat-label">Bajarilgan</div><div class="stat-val green" id="s-done">0</div><div class="stat-sub">vazifa</div></div>
+    <div class="stat-card"><div class="stat-label">Umumiy progress</div><div class="stat-val cyan" id="s-pct">0%</div><div class="stat-sub">bajarildi</div></div>
+    <div class="stat-card"><div class="stat-label">Eng samarali kun</div><div class="stat-val" id="s-best" style="font-size:20px;margin-top:4px;">—</div><div class="stat-sub" id="s-best-pct"></div></div>
+  </div>
+
+  <div class="clock" id="clock">
+    <div class="clock-modes">
+      <button class="pill active" id="m-clock" onclick="setMode('clock')">🕐 Soat</button>
+      <button class="pill" id="m-timer" onclick="setMode('timer')">⏳ Taymer</button>
+      <button class="pill" id="fs-btn" onclick="toggleFS()">⛶ To'liq ekran</button>
+    </div>
+    <div class="clock-row" title="Bosing: to'liq ekran">
+      <div class="fc" id="fc-h"><div class="fc-top"><span></span></div><div class="fc-bot"><span></span></div><div class="fc-flip-top"><span></span></div><div class="fc-flip-bot"><span></span></div><div class="ampm" id="ampm" onclick="toggle12(event)" title="12/24 soat"></div></div>
+      <div class="fc" id="fc-m"><div class="fc-top"><span></span></div><div class="fc-bot"><span></span></div><div class="fc-flip-top"><span></span></div><div class="fc-flip-bot"><span></span></div></div>
+    </div>
+    <div class="clock-label" id="clock-label">Focus mode</div>
+    <div class="timer-ctl" id="timer-ctl">
+      <div class="chips">
+        <button class="pill" onclick="setTimer(300)">5 daq</button>
+        <button class="pill" onclick="setTimer(600)">10 daq</button>
+        <button class="pill" onclick="setTimer(900)">15 daq</button>
+        <button class="pill" onclick="setTimer(1500)">25 daq</button>
+        <button class="pill" onclick="setTimer(2700)">45 daq</button>
+      </div>
+      <div class="t-row">
+        <input class="time-input" type="number" id="t-min" min="1" max="99" value="25" onchange="setTimer(Math.max(1,Math.min(99,Math.floor(+this.value||1)))*60)"/>
+        <span style="color:var(--text3);font-size:12px">daqiqa</span>
+        <button class="btn save" id="t-go" onclick="toggleTimer()">▶ Boshlash</button>
+        <button class="btn" onclick="resetTimer()">↺ Qayta</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="next-box" id="next-box"></div>
+
+  <div class="chart-section">
+    <div class="chart-header"><div class="chart-title">Kunlik progress</div></div>
+    <div class="bars" id="bars"></div>
+  </div>
+
+  <div class="days-grid" id="days-grid"></div>
+
+  <div class="data-box">
+    <div class="chart-title">Ma'lumotlar xavfsizligi</div>
+    <div class="data-row">
+      <button class="btn" onclick="exportData()">⬇ Zaxira yuklab olish</button>
+      <button class="btn" onclick="document.getElementById('imp').click()">⬆ Fayldan tiklash</button>
+      <input type="file" id="imp" accept=".json,application/json" hidden onchange="importData(this.files[0]);this.value=''"/>
+      <button class="btn auto-only" onclick="autoFile('new')">🔗 Avto-saqlash: yangi fayl</button>
+      <button class="btn auto-only" onclick="autoFile('open')">📂 Avto-saqlash: mavjud fayl</button>
+    </div>
+    <div class="hint" id="data-status"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="modal" id="modal"><div class="modal-box">
+  <div class="modal-emoji">⏰</div>
+  <div class="modal-time" id="m-time"></div>
+  <div class="modal-text" id="m-text"></div>
+  <div class="modal-actions">
+    <button class="btn save" onclick="ringDone()">✓ Bajarildi</button>
+    <button class="btn" onclick="ringSnooze()">⏱ 5 daqiqa</button>
+    <button class="btn clear" onclick="stopRing()">To'xtatish</button>
+  </div>
+</div></div>
+
+<script>
+const DAYS = ['Dushanba','Seshanba','Chorshanba','Payshanba','Juma','Shanba','Yakshanba'];
+const SHORT = ['Du','Se','Ch','Pa','Ju','Sh','Ya'];
+const AFFS = [
+  "Har bir qadam oldinga — bu g'alabadir! 🌟",
+  "Bugun qiyin tuyulgan narsa ertaga oson bo'ladi! 💪",
+  "Maqsadlaringga erishish uchun bitta qadam qol! 🎯",
+  "Siz bajara olasiz! Ishoning o'zingizga! ✨",
+  "Katta natijalar kichik harakatlardan boshlanadi! 🚀",
+  "Har bir vazifani bajarish — kuch ekanligini unutma! ⚡",
+  "Bugun rejangizga sodiq qoling! 🏆"
+];
+
+function getMonday(d) {
+  const dt = new Date(d);
+  const day = dt.getDay();
+  const diff = dt.getDate() - day + (day === 0 ? -6 : 1);
+  dt.setDate(diff);
+  return dt;
+}
+function fmt(d) { return d.getDate().toString().padStart(2,'0') + '.' + (d.getMonth()+1).toString().padStart(2,'0'); }
+function isToday(d) {
+  const t = new Date();
+  return d.getDate()===t.getDate() && d.getMonth()===t.getMonth() && d.getFullYear()===t.getFullYear();
+}
+
+const today = new Date();
+const pad = n => String(n).padStart(2,'0');
+function ymd(d) { return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
+function uid() { return Math.random().toString(36).slice(2,9); }
+let weekOffset = 0, weekDates = [];
+function K(i) { return ymd(weekDates[i]); }
+function setWeek(off) {
+  weekOffset = Math.max(-4, Math.min(4, off));
+  const mon = getMonday(today);
+  weekDates = DAYS.map((_,i) => { const d=new Date(mon); d.setDate(mon.getDate()+weekOffset*7+i); return d; });
+  document.getElementById('week-range').textContent = fmt(weekDates[0]) + ' — ' + fmt(weekDates[6]) + ', ' + weekDates[0].getFullYear();
+  document.getElementById('prev-btn').disabled = weekOffset<=-4;
+  document.getElementById('next-btn').disabled = weekOffset>=4;
+  render();
+}
+document.getElementById('affirmation').textContent = AFFS[Math.floor(Math.random()*AFFS.length)];
+
+let data = {};
+try {
+  const s3=localStorage.getItem('wp_data_v3');
+  if (s3) data=JSON.parse(s3);
+  else {
+    const s2=localStorage.getItem('wp_data_v2');
+    if (s2) { const o=JSON.parse(s2), mon=getMonday(today);
+      for (let i=0;i<7;i++) if (o[i]&&o[i].tasks&&o[i].tasks.length) { const d=new Date(mon); d.setDate(mon.getDate()+i); data[ymd(d)]=o[i]; } }
+  }
+} catch(e){}
+try { const f=localStorage.getItem('wp_focus'); if(f) document.getElementById('weekly-focus').value=f; } catch(e){}
+Object.values(data).forEach(d=>(d.tasks||[]).forEach(t=>{ if(!t.id) t.id=uid(); }));
+let fileHandle=null, writeT=null;
+function persist() {
+  try { localStorage.setItem('wp_data_v3',JSON.stringify(data)); } catch(e){}
+  if(fileHandle) { clearTimeout(writeT); writeT=setTimeout(writeFile,800); }
+}
+
+// ---- ALARM
+let audioCtx=null, alarmOn=true, ringing=null, beepTimer=null, ringStop=null;
+const fired=new Set(), snoozed={};
+function ensureAudio() { try { if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)(); if(audioCtx.state==='suspended') audioCtx.resume(); } catch(e){} }
+function askNotif() { try { if('Notification' in window && Notification.permission==='default') Notification.requestPermission(); } catch(e){} }
+document.addEventListener('click', ensureAudio);
+// Ovozlar: [kechikish(s), chastota(Hz), uzunlik(s), tur, balandlik(0-1)]
+const SOUNDS = {
+  klassik:  { name:'Klassik pik-pik', gap:1300, notes:[[0,880,.18,'square',.2],[.25,880,.18,'square',.2],[.5,880,.18,'square',.2]] },
+  yumshoq:  { name:'Yumshoq chimes', gap:1800, notes:[[0,523,.6,'sine',.3],[.3,659,.6,'sine',.3],[.6,784,.8,'sine',.3]] },
+  qongiroq: { name:"Qo'ng'iroq", gap:1600, notes:[[0,1200,.9,'sine',.3],[0,2400,.6,'sine',.1],[.55,1200,.9,'sine',.3],[.55,2400,.6,'sine',.1]] },
+  sirena:   { name:'Sirena', gap:1800, notes:[[0,600,.4,'sawtooth',.15],[.4,900,.4,'sawtooth',.15],[.8,600,.4,'sawtooth',.15],[1.2,900,.4,'sawtooth',.15]] },
+  raqamli:  { name:'Raqamli tez', gap:1000, notes:[[0,1500,.08,'square',.12],[.12,1500,.08,'square',.12],[.24,1500,.08,'square',.12],[.36,1500,.08,'square',.12]] },
+  melodiya: { name:'Ertalabki melodiya', gap:2000, notes:[[0,523,.3,'triangle',.3],[.25,659,.3,'triangle',.3],[.5,784,.3,'triangle',.3],[.75,1047,.5,'triangle',.3]] },
+  uygotish: { name:"Uyg'otuvchi (baland)", gap:1200, notes:[[0,440,.2,'square',.25],[.25,880,.2,'square',.25],[.5,440,.2,'square',.25],[.75,880,.2,'square',.25]] }
+};
+let curSound = 'klassik';
+try { const sv=localStorage.getItem('wp_sound'); if(sv&&SOUNDS[sv]) curSound=sv; } catch(e){}
+let customAudio=null;
+function playSound(name) {
+  if(name==='custom') {
+    if(customAudio&&customAudio.paused) customAudio.play().catch(e=>showToast(e.name==='NotAllowedError'?'⚠ Brauzer ovozni blokladi: sahifani bir marta bosing':'⚠ Audio chalinmadi: format qo\'llab-quvvatlanmaydi'));
+    return;
+  }
+  if(!audioCtx) return;
+  const t0=audioCtx.currentTime;
+  SOUNDS[name].notes.forEach(([d,f,len,type,vol])=>{
+    const o=audioCtx.createOscillator(), g=audioCtx.createGain();
+    o.type=type; o.frequency.value=f;
+    g.gain.setValueAtTime(0.0001,t0+d);
+    g.gain.exponentialRampToValueAtTime(vol,t0+d+0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001,t0+d+len);
+    o.connect(g); g.connect(audioCtx.destination); o.start(t0+d); o.stop(t0+d+len+0.02);
+  });
+}
+function beep() { if(alarmOn) playSound(curSound); }
+function stopCustom() { if(customAudio){ customAudio.pause(); customAudio.currentTime=0; } }
+function setSound(v) {
+  stopCustom(); curSound=v; ensureAudio();
+  try { localStorage.setItem('wp_sound',v); } catch(e){}
+  playSound(v);
+  if(v==='custom') setTimeout(()=>{ if(!ringing) stopCustom(); },4000);
+}
+function fillSounds() {
+  const sel=document.getElementById('sound-sel');
+  sel.innerHTML=Object.keys(SOUNDS).map(k=>`<option value="${k}">${k==='custom'?'':'🎵 '}${SOUNDS[k].name.replace(/</g,'&lt;')}</option>`).join('');
+  sel.value=SOUNDS[curSound]?curSound:'klassik';
+}
+function idb() { return new Promise((res,rej)=>{ const r=indexedDB.open('wp_audio',1); r.onupgradeneeded=()=>r.result.createObjectStore('f'); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
+async function idbSet(blob) { const db=await idb(); return new Promise((res,rej)=>{ const tx=db.transaction('f','readwrite'); tx.objectStore('f').put(blob,'custom'); tx.oncomplete=res; tx.onerror=()=>rej(tx.error); }); }
+async function idbGet() { const db=await idb(); return new Promise((res,rej)=>{ const q=db.transaction('f').objectStore('f').get('custom'); q.onsuccess=()=>res(q.result); q.onerror=()=>rej(q.error); }); }
+function useCustom(blob,name) {
+  stopCustom();
+  if(!blob.type||/m4a|aac/i.test(blob.type)) blob=new Blob([blob],{type:'audio/mp4'});
+  customAudio=new Audio(URL.createObjectURL(blob));
+  customAudio.preload='auto';
+  customAudio.addEventListener('error',()=>showToast('⚠ Audio o\'qilmadi. Boshqa format (mp3) bilan urinib ko\'ring'));
+  SOUNDS.custom={name:'📁 '+name, gap:1000, notes:[]};
+  fillSounds();
+}
+async function loadCustom(f) {
+  if(!f) return;
+  if(f.size>15*1024*1024) { showToast('Fayl 15 MB dan kichik bo\'lsin'); return; }
+  let saved=true;
+  try { await idbSet(f); localStorage.setItem('wp_custom_name',f.name.slice(0,24)); } catch(e){ saved=false; }
+  useCustom(f,f.name.slice(0,24));
+  document.getElementById('sound-sel').value='custom';
+  setSound('custom');
+  showToast(saved?'✓ Audio qo\'shildi':'Audio qo\'shildi (saqlanmadi, sahifa yangilansa yo\'qoladi)');
+}
+document.addEventListener('click',()=>{
+  const a=customAudio;
+  if(!a||a.__u||ringing||!a.paused) return;
+  a.__u=1; a.muted=true;
+  a.play().then(()=>{ a.pause(); a.currentTime=0; a.muted=false; }).catch(()=>{ a.muted=false; a.__u=0; });
+});
+fillSounds();
+try { idbGet().then(b=>{ if(!b) return; useCustom(b,localStorage.getItem('wp_custom_name')||'Mening audiom'); if(localStorage.getItem('wp_sound')==='custom'){ curSound='custom'; fillSounds(); } }).catch(()=>{}); } catch(e){}
+function toggleAlarm() {
+  alarmOn=!alarmOn; ensureAudio();
+  const b=document.getElementById('alarm-btn');
+  b.classList.toggle('off',!alarmOn);
+  b.innerHTML=alarmOn?'🔔 &nbsp;Budilnik: yoqilgan':'🔕 &nbsp;Budilnik: o\'chiq';
+  if(alarmOn){ askNotif(); beep(); }
+  showToast(alarmOn?'🔔 Budilnik yoqildi':'🔕 Budilnik o\'chirildi');
+}
+function toggleBell(e,i,j) { e.stopPropagation(); ensureDay(i); const t=data[K(i)].tasks[j]; t.alarm=(t.alarm===false); persist(); render(); }
+function startRing(t,key) {
+  ringing={t,key};
+  document.getElementById('m-time').textContent=t.time+(t.end?' – '+t.end:'');
+  document.getElementById('m-text').textContent=t.text;
+  document.getElementById('modal').classList.add('show');
+  document.title='⏰ '+t.text;
+  ensureAudio(); beep(); beepTimer=setInterval(beep,SOUNDS[curSound].gap);
+  ringStop=setTimeout(stopRing,90000);
+  try { if(alarmOn&&'Notification' in window&&Notification.permission==='granted') new Notification('⏰ '+t.time,{body:t.text}); } catch(e){}
+}
+function stopRing() {
+  clearInterval(beepTimer); clearTimeout(ringStop); ringing=null; stopCustom();
+  document.getElementById('modal').classList.remove('show');
+  document.title='Haftalik Rejalashtiruvchi';
+}
+function ringDone() { if(ringing){ ringing.t.done=true; persist(); } stopRing(); render(); }
+function ringSnooze() {
+  if(ringing&&ringing.t.id==='timer'){ stopRing(); startTimerSec(300); return; }
+  if(ringing){ const d=new Date(Date.now()+5*60000); snoozed[ringing.t.id]=pad(d.getHours())+':'+pad(d.getMinutes()); showToast('⏱ 5 daqiqadan keyin eslataman'); }
+  stopRing();
+}
+function checkAlarms() {
+  if(ringing||!alarmOn) return;
+  const now=new Date(), key=ymd(now), nm=now.getHours()*60+now.getMinutes();
+  for (const t of ((data[key]&&data[key].tasks)||[])) {
+    if(!t.time||t.done||t.alarm===false) continue;
+    for (const tt of [t.time, snoozed[t.id]].filter(Boolean)) {
+      const [h,m]=tt.split(':').map(Number), diff=nm-(h*60+m), fk=key+t.id+tt;
+      if(diff>=0&&diff<=2&&!fired.has(fk)){ fired.add(fk); startRing(t,key); return; }
+    }
+  }
+}
+
+function ensureDay(i) { if(!data[K(i)]) data[K(i)]={tasks:[]}; }
+function dayPct(i) {
+  const d=data[K(i)];
+  if(!d||!d.tasks||!d.tasks.length) return 0;
+  return Math.round(d.tasks.filter(t=>t.done).length/d.tasks.length*100);
+}
+
+function delTask(e,i,j) { e.stopPropagation(); ensureDay(i); data[K(i)].tasks.splice(j,1); persist(); render(); }
+function sortedTasks(i) {
+  return (data[K(i)].tasks||[]).map((t,j)=>({t,j})).sort((a,b)=>{
+    if(!a.t.time&&!b.t.time) return a.j-b.j;
+    if(!a.t.time) return 1;
+    if(!b.t.time) return -1;
+    return a.t.time.localeCompare(b.t.time)||a.j-b.j;
+  });
+}
+function nowStr() { const n=new Date(); return n.getHours().toString().padStart(2,'0')+':'+n.getMinutes().toString().padStart(2,'0'); }
+function toggleTask(i,j) { ensureDay(i); data[K(i)].tasks[j].done=!data[K(i)].tasks[j].done; persist(); render(); }
+function addTask(i) {
+  const inp=document.getElementById('ti-'+i);
+  const v=inp.value.trim();
+  if(!v) return;
+  ensureDay(i);
+  const tm=document.getElementById('tm-'+i).value, te=document.getElementById('te-'+i).value;
+  if(te&&!tm) { showToast('Avval boshlanish vaqtini kiriting'); return; }
+  if(te&&te<=tm) { showToast('Tugash vaqti boshlanishdan keyin bo\'lsin'); return; }
+  data[K(i)].tasks.push({id:uid(),text:v,done:false,time:tm||'',end:te||'',alarm:true});
+  if(tm){ ensureAudio(); askNotif(); }
+  persist();
+  inp.value='';
+  render();
+}
+function saveAll() {
+  persist();
+  try { localStorage.setItem('wp_focus',document.getElementById('weekly-focus').value); } catch(e){}
+  showToast('✓ Saqlandi!');
+}
+function clearAll() {
+  if(!confirm('Hamma vazifalar o\'chirilsinmi?')) return;
+  data={};
+  document.getElementById('weekly-focus').value='';
+  try { localStorage.removeItem('wp_data_v3'); localStorage.removeItem('wp_data_v2'); localStorage.removeItem('wp_focus'); } catch(e){}
+  render();
+}
+function showToast(msg) {
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2000);
+}
+
+function donut(pct, size=48) {
+  const r=18, cx=size/2, cy=size/2, sw=4;
+  const circ=2*Math.PI*r;
+  const dash=circ*pct/100;
+  const color=pct>0?'#4ade80':'#1a1d28';
+  const trackColor='rgba(255,255,255,0.06)';
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${trackColor}" stroke-width="${sw}"/>
+    ${pct>0?`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="${sw}"
+      stroke-dasharray="${dash.toFixed(2)} ${circ.toFixed(2)}" stroke-dashoffset="${(circ/4).toFixed(2)}"
+      stroke-linecap="round" style="filter:drop-shadow(0 0 4px #4ade8088)"/>`:``}
+    <text x="${cx}" y="${cy+4}" text-anchor="middle" font-family="DM Mono,monospace" font-size="10" font-weight="500" fill="${pct>0?'#4ade80':'#555870'}">${pct}%</text>
+  </svg>`;
+}
+
+function render() {
+  let total=0,done=0,bestDay='—',bestPct=-1,bestIdx=-1;
+  for(let i=0;i<7;i++){
+    const d=data[K(i)];
+    if(d&&d.tasks){total+=d.tasks.length;done+=d.tasks.filter(t=>t.done).length;}
+    const p=dayPct(i);
+    if(data[K(i)]&&data[K(i)].tasks&&data[K(i)].tasks.length&&p>bestPct){bestPct=p;bestDay=DAYS[i];bestIdx=i;}
+  }
+  const pct=total>0?Math.round(done/total*100):0;
+  document.getElementById('s-total').textContent=total;
+  document.getElementById('s-done').textContent=done;
+  document.getElementById('s-pct').textContent=pct+'%';
+  document.getElementById('s-best').textContent=bestPct>=0?bestDay:'—';
+  document.getElementById('s-best-pct').textContent=bestPct>=0?bestPct+'% bajarildi':'';
+
+  // Next task today
+  (function(){
+    const box=document.getElementById('next-box');
+    const n=nowStr();
+    const tk=ymd(new Date());
+    const list=((data[tk]&&data[tk].tasks)||[]).filter(t=>t.time&&!t.done).sort((a,b)=>a.time.localeCompare(b.time)).map(t=>({t}));
+    const nxt=list.find(x=>x.t.time>=n)||list[list.length-1];
+    if(!nxt){ box.innerHTML='<span class="next-label">Keyingi vazifa</span><span class="next-text" style="color:var(--text3)">Bugun uchun vaqtli vazifa yo\'q — kartaga vaqt va vazifa qo\'shing</span>'; return; }
+    box.innerHTML='<span class="next-label">'+(nxt.t.time>=n?'Keyingi vazifa':'Kechikkan')+'</span><span class="next-time">'+nxt.t.time+(nxt.t.end?'–'+nxt.t.end:'')+'</span><span class="next-text">'+nxt.t.text.replace(/</g,'&lt;')+'</span>';
+  })();
+
+  // Bars
+  const progs=DAYS.map((_,i)=>dayPct(i));
+  const maxP=Math.max(...progs,1);
+  document.getElementById('bars').innerHTML=progs.map((p,i)=>{
+    const h=Math.max(Math.round(p/maxP*70),4);
+    const tod=isToday(weekDates[i]);
+    const cls=tod?'bar-fill today-bar':(p>0?'bar-fill has-data':'bar-fill');
+    return `<div class="bar-col">
+      <div class="${cls}" style="height:${h}px" title="${SHORT[i]}: ${p}%"></div>
+      <div class="bar-lbl${tod?' today-lbl':''}">${SHORT[i]}</div>
+    </div>`;
+  }).join('');
+
+  // Days
+  document.getElementById('days-grid').innerHTML=DAYS.map((day,i)=>{
+    ensureDay(i);
+    const sorted=sortedTasks(i);
+    const pct=dayPct(i);
+    const tod=isToday(weekDates[i]);
+    let nowJ=-1;
+    if(tod){ const n=nowStr(); sorted.forEach(({t,j})=>{ if(t.time&&t.time<=n&&!t.done&&(!t.end||n<t.end)) nowJ=j; }); }
+    return `<div class="day-card${tod?' today-card':''}">
+      <div class="day-head">
+        <div>
+          <div class="day-name${tod?' today-name':''}">${SHORT[i]}</div>
+          <div class="day-date">${fmt(weekDates[i])}</div>
+        </div>
+        ${tod?'<div class="today-badge">Bugun</div>':''}
+      </div>
+      <div class="donut-center">${donut(pct)}</div>
+      <ul class="tasks-list">${sorted.map(({t,j})=>`
+        <li class="task-row${t.done?' done':''}${j===nowJ?' now':''}${t.end?' has-end':''}" onclick="toggleTask(${i},${j})">
+          <div class="task-check${t.done?' checked':''}">${t.done?'✓':''}</div>
+          <span class="task-time${t.time?'':' none'}">${t.time?(t.time+(t.end?'–'+t.end:'')):'--:--'}</span>
+          <span class="task-text">${t.text.replace(/</g,'&lt;')}</span>
+          ${t.time?`<span class="task-bell${t.alarm===false?' off':''}" onclick="toggleBell(event,${i},${j})" title="Budilnik">${t.alarm===false?'🔕':'🔔'}</span>`:''}<span class="task-del" onclick="delTask(event,${i},${j})" title="O'chirish">✕</span>
+        </li>`).join('')}</ul>
+      <div class="add-box">
+        <div class="time-row"><input class="time-input" type="time" id="tm-${i}" title="Boshlanish"/><span>—</span><input class="time-input" type="time" id="te-${i}" title="Tugash"/></div>
+        <div class="add-row">
+          <input class="add-input" id="ti-${i}" placeholder="Vazifa..." onkeydown="if(event.key==='Enter')addTask(${i})"/>
+          <button class="add-btn" onclick="addTask(${i})">+</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+let tmode='clock', timerSet=1500, timerRem=1500, timerRunning=false, timerEnd=0;
+function timerRemaining() { return timerRunning?Math.max(0,Math.ceil((timerEnd-Date.now())/1000)):timerRem; }
+function updateTimerBtn() { document.getElementById('t-go').textContent=timerRunning?'⏸ Pauza':'▶ Boshlash'; }
+function setMode(m) {
+  tmode=m;
+  document.getElementById('m-clock').classList.toggle('active',m==='clock');
+  document.getElementById('m-timer').classList.toggle('active',m==='timer');
+  document.getElementById('timer-ctl').classList.toggle('show',m==='timer');
+  tick();
+}
+function setTimer(sec) {
+  timerSet=sec; timerRem=sec; timerRunning=false;
+  document.getElementById('t-min').value=Math.round(sec/60);
+  updateTimerBtn(); tick();
+}
+function toggleTimer() {
+  if(timerRunning) { timerRem=timerRemaining(); timerRunning=false; }
+  else { ensureAudio(); askNotif(); if(timerRem<=0) timerRem=timerSet; timerEnd=Date.now()+timerRem*1000; timerRunning=true; }
+  updateTimerBtn(); tick();
+}
+function resetTimer() { timerRunning=false; timerRem=timerSet; updateTimerBtn(); tick(); }
+function startTimerSec(sec) { setMode('timer'); timerRem=sec; timerEnd=Date.now()+sec*1000; timerRunning=true; updateTimerBtn(); tick(); }
+let clk12=true;
+try { clk12=localStorage.getItem('wp_clk12')!=='0'; } catch(e){}
+function toggle12(e) { e.stopPropagation(); if(tmode!=='clock') return; clk12=!clk12; try { localStorage.setItem('wp_clk12',clk12?'1':'0'); } catch(x){} tick(); }
+function setCard(id,val) {
+  const c=document.getElementById(id), old=c.dataset.v;
+  if(old===val) return;
+  c.dataset.v=val;
+  const q=sel=>c.querySelector(sel+' span');
+  if(old===undefined) { ['.fc-top','.fc-bot','.fc-flip-top','.fc-flip-bot'].forEach(x=>q(x).textContent=val); return; }
+  q('.fc-top').textContent=val; q('.fc-flip-top').textContent=old; q('.fc-flip-bot').textContent=val;
+  c.classList.remove('go'); void c.offsetWidth; c.classList.add('go');
+  setTimeout(()=>{ q('.fc-bot').textContent=val; c.classList.remove('go'); },650);
+}
+function tick() {
+  if(timerRunning&&Date.now()>=timerEnd&&!ringing) {
+    timerRunning=false; timerRem=0; updateTimerBtn();
+    startRing({id:'timer',time:'⏱',text:'Taymer tugadi!'},null);
+  }
+  const ap=document.getElementById('ampm'), lab=document.getElementById('clock-label');
+  if(tmode==='timer') {
+    const r=Math.min(timerRemaining(),99*60+59);
+    setCard('fc-h',pad(Math.floor(r/60))); setCard('fc-m',pad(r%60));
+    ap.textContent='MIN';
+    lab.textContent=timerRunning?'Taymer ishlamoqda':(r===0?'Tugadi':(r===timerSet?'Taymer tayyor':'Pauza'));
+    return;
+  }
+  const n=new Date(); let h=n.getHours();
+  const apm=h>=12?'PM':'AM';
+  if(clk12) h=h%12||12;
+  setCard('fc-h',pad(h)); setCard('fc-m',pad(n.getMinutes()));
+  ap.textContent=clk12?apm:'24H';
+  const tk=ymd(n), nowT=pad(n.getHours())+':'+pad(n.getMinutes());
+  const cur=((data[tk]&&data[tk].tasks)||[]).filter(t=>t.time&&t.time<=nowT&&!t.done&&(!t.end||nowT<t.end)).sort((a,b)=>a.time.localeCompare(b.time)).pop();
+  lab.textContent=cur?cur.text:'Focus mode';
+}
+function inFS() {
+  const el=document.getElementById('clock');
+  return document.fullscreenElement===el||document.webkitFullscreenElement===el||el.classList.contains('fake-fs');
+}
+function updateFS() { document.getElementById('fs-btn').textContent=inFS()?'✕ Chiqish':'⛶ To\'liq ekran'; }
+function toggleFS() {
+  const el=document.getElementById('clock');
+  if(inFS()) {
+    if(el.classList.contains('fake-fs')) el.classList.remove('fake-fs');
+    else { try { (document.exitFullscreen||document.webkitExitFullscreen).call(document); } catch(e){} }
+    updateFS(); return;
+  }
+  const fake=()=>{ el.classList.add('fake-fs'); updateFS(); };
+  const req=el.requestFullscreen||el.webkitRequestFullscreen;
+  if(!req) { fake(); return; }
+  try { const p=req.call(el); if(p&&p.catch) p.catch(fake); } catch(e){ fake(); }
+}
+document.addEventListener('fullscreenchange',updateFS);
+document.addEventListener('webkitfullscreenchange',updateFS);
+document.addEventListener('keydown',e=>{ const el=document.getElementById('clock'); if(e.key==='Escape'&&el.classList.contains('fake-fs')) { el.classList.remove('fake-fs'); updateFS(); } });
+document.querySelector('.clock-row').addEventListener('click',toggleFS);
+tick(); setInterval(tick,250);
+// ---- ZAXIRA va AVTO-SAQLASH
+function setStatus(t) { document.getElementById('data-status').textContent=t; }
+function snapshot() { return JSON.stringify({v:3,savedAt:new Date().toISOString(),focus:document.getElementById('weekly-focus').value,data}); }
+function exportData() {
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([snapshot()],{type:'application/json'}));
+  a.download='planner-zaxira-'+ymd(new Date())+'.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+  showToast('✓ Zaxira fayli yuklandi');
+}
+function applyBackup(o) {
+  data=o.data;
+  Object.values(data).forEach(d=>(d.tasks||[]).forEach(t=>{ if(!t.id) t.id=uid(); }));
+  if(typeof o.focus==='string') { document.getElementById('weekly-focus').value=o.focus; try { localStorage.setItem('wp_focus',o.focus); } catch(e){} }
+  persist(); render(); tick();
+}
+function parseBackup(txt) { const o=JSON.parse(txt); if(!o||typeof o.data!=='object'||o.data===null) throw new Error('bad'); return o; }
+async function importData(f) {
+  if(!f) return;
+  try {
+    const o=parseBackup(await f.text());
+    if(!confirm('Joriy ma\'lumotlar zaxiradagi bilan almashtiriladi. Davom etasizmi?')) return;
+    applyBackup(o); showToast('✓ Tiklandi');
+  } catch(e) { showToast('⚠ Fayl noto\'g\'ri'); }
+}
+async function idbPut(key,val) { const db=await idb(); return new Promise((res,rej)=>{ const tx=db.transaction('f','readwrite'); tx.objectStore('f').put(val,key); tx.oncomplete=res; tx.onerror=()=>rej(tx.error); }); }
+async function idbGetK(key) { const db=await idb(); return new Promise((res,rej)=>{ const q=db.transaction('f').objectStore('f').get(key); q.onsuccess=()=>res(q.result); q.onerror=()=>rej(q.error); }); }
+async function writeFile() {
+  if(!fileHandle) return;
+  try { const w=await fileHandle.createWritable(); await w.write(snapshot()); await w.close(); setStatus('✓ Avto-saqlash yoqilgan: '+fileHandle.name+' ('+new Date().toLocaleTimeString().slice(0,5)+')'); }
+  catch(e) { setStatus('⚠ Faylga yozib bo\'lmadi. Avto-saqlashni qayta ulang.'); }
+}
+const JSON_TYPES=[{description:'Planner zaxira fayli',accept:{'application/json':['.json']}}];
+async function autoFile(kind) {
+  try {
+    let h;
+    if(kind==='new') h=await showSaveFilePicker({suggestedName:'planner-data.json',types:JSON_TYPES});
+    else {
+      [h]=await showOpenFilePicker({types:JSON_TYPES});
+      const txt=(await (await h.getFile()).text()).trim();
+      if(txt) {
+        const o=parseBackup(txt);
+        if(!confirm('Fayldagi ma\'lumotlar yuklansinmi? Joriy ma\'lumotlar almashtiriladi.')) return;
+        applyBackup(o);
+      }
+    }
+    fileHandle=h; await idbPut('handle',h); await writeFile();
+  } catch(e) { if(e&&e.name!=='AbortError') showToast('⚠ Fayl ulanmadi'); }
+}
+(async function initData() {
+  try { if(navigator.storage&&navigator.storage.persist) await navigator.storage.persist(); } catch(e){}
+  if(!window.showSaveFilePicker) {
+    document.querySelectorAll('.auto-only').forEach(b=>b.style.display='none');
+    setStatus('Bu brauzer avto-saqlash faylini qo\'llamaydi (Chrome/Edge qo\'llaydi). Vaqti-vaqti bilan "Zaxira yuklab olish" ni bosing.');
+    return;
+  }
+  setStatus('Tavsiya: bir marta "Avto-saqlash" faylini ulang. Shunda har o\'zgarish kompyuteringizdagi faylga ham yoziladi.');
+  try {
+    const h=await idbGetK('handle'); if(!h) return;
+    fileHandle=h;
+    if(await h.queryPermission({mode:'readwrite'})==='granted') { setStatus('✓ Avto-saqlash yoqilgan: '+h.name); return; }
+    setStatus('Avto-saqlashni davom ettirish uchun sahifada bir marta bosing ('+h.name+')');
+    const once=async()=>{ document.removeEventListener('click',once); try { if(await h.requestPermission({mode:'readwrite'})==='granted') writeFile(); } catch(e){} };
+    document.addEventListener('click',once);
+  } catch(e){}
+})();
+if('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(()=>{});
+
+setWeek(0);
+setTimeout(()=>document.body.classList.add('rendered'),800);
+setInterval(checkAlarms,5000);
+checkAlarms();
+setInterval(()=>{ const a=document.activeElement; if(!a||a.tagName!=='INPUT') render(); },60000);
+</script>
+</body>
+</html>
