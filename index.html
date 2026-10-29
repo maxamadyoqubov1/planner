@@ -173,7 +173,7 @@
   .clock { --h: clamp(110px, 24vw, 190px); background: var(--bg2); border: 0.5px solid var(--border); border-radius: 16px; padding: 28px 16px 20px; margin-bottom: 28px; display: flex; flex-direction: column; align-items: center; gap: 18px; }
   .clock:fullscreen { --h: clamp(160px, 34vw, 380px); background: var(--bg); justify-content: center; }
   .clock-row { display: flex; gap: calc(var(--h) * .09); }
-  .fc { position: relative; width: calc(var(--h) * .95); height: var(--h); perspective: 700px; font-family: var(--mono); font-size: calc(var(--h) * .76); font-weight: 500; }
+  .fc { position: relative; width: calc(var(--h) * .95); height: var(--h); perspective: 700px; font-family: var(--mono); font-size: calc(var(--h) * .64); font-weight: 500; }
   .fc::after { content: ''; position: absolute; left: 0; right: 0; top: calc(50% - 1px); height: 2px; background: var(--bg); z-index: 5; }
   .fc > div:not(.ampm) { position: absolute; left: 0; right: 0; height: 50%; overflow: hidden; background: #1a1d28; color: var(--text); display: flex; justify-content: center; align-items: flex-start; backface-visibility: hidden; }
   .fc > div:not(.ampm) span { display: block; line-height: var(--h); height: var(--h); }
@@ -483,15 +483,15 @@ function toggleAlarm() {
   showToast(alarmOn?'🔔 Budilnik yoqildi':'🔕 Budilnik o\'chirildi');
 }
 function toggleBell(e,i,j) { e.stopPropagation(); ensureDay(i); const t=data[K(i)].tasks[j]; t.alarm=(t.alarm===false); persist(); render(); }
-function startRing(t,key) {
-  ringing={t,key};
-  document.getElementById('m-time').textContent=t.time+(t.end?' – '+t.end:'');
-  document.getElementById('m-text').textContent=t.text;
+function startRing(t,key,isEnd) {
+  ringing={t,key,isEnd:!!isEnd};
+  document.getElementById('m-time').textContent=isEnd?t.end:t.time+(t.end?' – '+t.end:'');
+  document.getElementById('m-text').textContent=isEnd?'Vaqt tugadi: '+t.text:t.text;
   document.getElementById('modal').classList.add('show');
-  document.title='⏰ '+t.text;
+  document.title=(isEnd?'⌛ ':'⏰ ')+t.text;
   ensureAudio(); beep(); beepTimer=setInterval(beep,SOUNDS[curSound].gap);
   ringStop=setTimeout(stopRing,90000);
-  try { if(alarmOn&&'Notification' in window&&Notification.permission==='granted') new Notification('⏰ '+t.time,{body:t.text}); } catch(e){}
+  try { if(alarmOn&&'Notification' in window&&Notification.permission==='granted') new Notification(isEnd?'⌛ '+t.end:'⏰ '+t.time,{body:(isEnd?'Vaqt tugadi: ':'')+t.text}); } catch(e){}
 }
 function stopRing() {
   clearInterval(beepTimer); clearTimeout(ringStop); ringing=null; stopCustom();
@@ -501,7 +501,7 @@ function stopRing() {
 function ringDone() { if(ringing){ ringing.t.done=true; persist(); } stopRing(); render(); }
 function ringSnooze() {
   if(ringing&&ringing.t.id==='timer'){ stopRing(); startTimerSec(300); return; }
-  if(ringing){ const d=new Date(Date.now()+5*60000); snoozed[ringing.t.id]=pad(d.getHours())+':'+pad(d.getMinutes()); showToast('⏱ 5 daqiqadan keyin eslataman'); }
+  if(ringing){ const d=new Date(Date.now()+5*60000); snoozed[ringing.t.id]={tm:pad(d.getHours())+':'+pad(d.getMinutes()),end:ringing.isEnd}; showToast('⏱ 5 daqiqadan keyin eslataman'); }
   stopRing();
 }
 function checkAlarms() {
@@ -509,9 +509,13 @@ function checkAlarms() {
   const now=new Date(), key=ymd(now), nm=now.getHours()*60+now.getMinutes();
   for (const t of ((data[key]&&data[key].tasks)||[])) {
     if(!t.time||t.done||t.alarm===false) continue;
-    for (const tt of [t.time, snoozed[t.id]].filter(Boolean)) {
-      const [h,m]=tt.split(':').map(Number), diff=nm-(h*60+m), fk=key+t.id+tt;
-      if(diff>=0&&diff<=2&&!fired.has(fk)){ fired.add(fk); startRing(t,key); return; }
+    const sz=snoozed[t.id];
+    const list=[[t.time,false]];
+    if(t.end) list.push([t.end,true]);
+    if(sz) list.push([sz.tm,sz.end]);
+    for (const [tt,isEnd] of list) {
+      const [h,m]=tt.split(':').map(Number), diff=nm-(h*60+m), fk=key+t.id+tt+(isEnd?'e':'s');
+      if(diff>=0&&diff<=2&&!fired.has(fk)){ fired.add(fk); startRing(t,key,isEnd); return; }
     }
   }
 }
