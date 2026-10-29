@@ -206,6 +206,35 @@
   .task-row.missed .task-text { color: var(--text3); }
   .task-flag { display: block; font-style: normal; font-size: 10px; letter-spacing: .05em; color: var(--accent3); margin-top: 2px; }
   .task-lock { margin-left: auto; font-size: 10px; opacity: .55; }
+  /* ANIQ SOAT: soat, daqiqa, soniya, millisekund, mikrosekund */
+  .precise { display: none; gap: 10px; justify-content: center; width: 100%; max-width: 1100px; cursor: pointer; }
+  .precise.show { display: flex; }
+  .pc { position: relative; flex: 1 1 0; min-width: 0; aspect-ratio: .78; background: #1a1d28; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-weight: 600; font-size: clamp(28px, 8vw, 104px); color: var(--text); overflow: hidden; }
+  .pc::after { content: ''; position: absolute; left: 0; right: 0; top: calc(50% - 1px); height: 2px; background: var(--bg); }
+  .pc small { position: absolute; left: 10px; bottom: 8px; font-size: clamp(7px, 1.05vw, 12px); font-weight: 400; letter-spacing: .08em; color: var(--text3); white-space: nowrap; }
+  .pc.ms, .pc.us { font-size: clamp(20px, 5.6vw, 76px); }
+  .pc.ms { color: #ff9a2e; }
+  .pc.us { color: #6cc0ff; }
+  .clock:fullscreen .pc, .clock.fake-fs .pc { font-size: clamp(30px, 8vw, 170px); }
+  .clock:fullscreen .pc.ms, .clock:fullscreen .pc.us, .clock.fake-fs .pc.ms, .clock.fake-fs .pc.us { font-size: clamp(22px, 5.8vw, 124px); }
+  .clock:fullscreen .precise, .clock.fake-fs .precise { max-width: 96vw; }
+  @media (max-width: 560px) { .precise { flex-wrap: wrap; } .pc { flex: 1 1 28%; font-size: clamp(30px, 14vw, 70px); } .pc.ms, .pc.us { font-size: clamp(22px, 10vw, 50px); } .pc small { font-size: 8px; } }
+  .precise-title { display: none; font-size: clamp(16px, 3vw, 30px); font-weight: 600; letter-spacing: .03em; color: var(--text); text-align: center; }
+  .precise-title.show { display: block; }
+  .clock:fullscreen .precise-title, .clock.fake-fs .precise-title { font-size: clamp(22px, 4vw, 52px); }
+  .pc.pf { overflow: visible; perspective: 700px; background: none; }
+  .pc.pf > div { position: absolute; left: 0; right: 0; height: 50%; overflow: hidden; background: #1a1d28; backface-visibility: hidden; }
+  .pc.pf > div > span { position: absolute; left: 0; right: 0; height: 200%; display: flex; align-items: center; justify-content: center; }
+  .pf-top, .pf-ft { top: 0; border-radius: 14px 14px 0 0; }
+  .pf-bot, .pf-fb { bottom: 0; border-radius: 0 0 14px 14px; }
+  .pf-top > span, .pf-ft > span { top: 0; }
+  .pf-bot > span, .pf-fb > span { bottom: 0; }
+  .pf-ft { transform-origin: bottom; visibility: hidden; z-index: 3; }
+  .pf-fb { transform-origin: top; visibility: hidden; z-index: 3; transform: rotateX(90deg); }
+  .pf.go .pf-ft { visibility: visible; animation: flipTop .3s ease-in forwards; }
+  .pf.go .pf-fb { visibility: visible; animation: flipBot .3s ease-out .3s forwards; }
+  .pc::after { z-index: 5; }
+  .pc small { z-index: 6; pointer-events: none; }
   .hint { font-size: 11px; color: var(--text3); align-self: center; }
   .actions { flex-wrap: wrap; }
   .rendered .day-card { animation: none; }
@@ -283,11 +312,20 @@
     <div class="clock-modes">
       <button class="pill active" id="m-clock" onclick="setMode('clock')">🕐 Soat</button>
       <button class="pill" id="m-timer" onclick="setMode('timer')">⏳ Taymer</button>
+      <button class="pill" id="m-precise" onclick="setMode('precise')">⚡ Aniq soat</button>
       <button class="pill" id="fs-btn" onclick="toggleFS()">⛶ To'liq ekran</button>
     </div>
     <div class="clock-row" title="Bosing: to'liq ekran">
       <div class="fc" id="fc-h"><div class="fc-top"><span></span></div><div class="fc-bot"><span></span></div><div class="fc-flip-top"><span></span></div><div class="fc-flip-bot"><span></span></div><div class="ampm" id="ampm" onclick="toggle12(event)" title="12/24 soat"></div></div>
       <div class="fc" id="fc-m"><div class="fc-top"><span></span></div><div class="fc-bot"><span></span></div><div class="fc-flip-top"><span></span></div><div class="fc-flip-bot"><span></span></div></div>
+    </div>
+    <div class="precise-title" id="precise-title">Vaqt to'xtab turmaydi</div>
+    <div class="precise" id="precise" title="Bosing: to'liq ekran">
+      <div class="pc pf" id="pf-h"><div class="pf-top"><span></span></div><div class="pf-bot"><span></span></div><div class="pf-ft"><span></span></div><div class="pf-fb"><span></span></div><small>24H</small></div>
+      <div class="pc pf" id="pf-m"><div class="pf-top"><span></span></div><div class="pf-bot"><span></span></div><div class="pf-ft"><span></span></div><div class="pf-fb"><span></span></div><small>DAQIQA</small></div>
+      <div class="pc pf" id="pf-s"><div class="pf-top"><span></span></div><div class="pf-bot"><span></span></div><div class="pf-ft"><span></span></div><div class="pf-fb"><span></span></div><small>SONIYA</small></div>
+      <div class="pc ms"><span id="p-ms">000</span><small>MILLISEKUND</small></div>
+      <div class="pc us"><span id="p-us">000</span><small>MIKROSEKUND</small></div>
     </div>
     <div class="clock-label" id="clock-label">Focus mode</div>
     <div class="timer-ctl" id="timer-ctl">
@@ -711,8 +749,33 @@ function setMode(m) {
   tmode=m;
   document.getElementById('m-clock').classList.toggle('active',m==='clock');
   document.getElementById('m-timer').classList.toggle('active',m==='timer');
+  document.getElementById('m-precise').classList.toggle('active',m==='precise');
   document.getElementById('timer-ctl').classList.toggle('show',m==='timer');
+  document.querySelector('.clock-row').style.display=m==='precise'?'none':'';
+  document.getElementById('precise').classList.toggle('show',m==='precise');
+  document.getElementById('precise-title').classList.toggle('show',m==='precise');
+  if(m==='precise'&&!preciseRAF) preciseLoop();
   tick();
+}
+function setPF(id,val) {
+  const c=document.getElementById(id), old=c.dataset.v;
+  if(old===val) return;
+  c.dataset.v=val;
+  const q=sel=>c.querySelector(sel+' span');
+  if(old===undefined) { ['.pf-top','.pf-bot','.pf-ft','.pf-fb'].forEach(x=>q(x).textContent=val); return; }
+  q('.pf-top').textContent=val; q('.pf-ft').textContent=old; q('.pf-fb').textContent=val;
+  c.classList.remove('go'); void c.offsetWidth; c.classList.add('go');
+  setTimeout(()=>{ q('.pf-bot').textContent=val; c.classList.remove('go'); },650);
+}
+let preciseRAF=0;
+function preciseLoop() {
+  if(tmode!=='precise') { preciseRAF=0; return; }
+  const t=performance.timeOrigin+performance.now(), dt=new Date(Math.floor(t));
+  const set=(id,v)=>{ const e=document.getElementById(id); if(e.textContent!==v) e.textContent=v; };
+  setPF('pf-h',pad(dt.getHours())); setPF('pf-m',pad(dt.getMinutes())); setPF('pf-s',pad(dt.getSeconds()));
+  set('p-ms',String(dt.getMilliseconds()).padStart(3,'0'));
+  set('p-us',String(Math.floor((t%1)*1000)).padStart(3,'0'));
+  preciseRAF=requestAnimationFrame(preciseLoop);
 }
 function setTimer(sec) {
   timerSet=sec; timerRem=sec; timerRunning=false;
@@ -755,8 +818,7 @@ function tick() {
   const n=new Date(); let h=n.getHours();
   const apm=h>=12?'PM':'AM';
   if(clk12) h=h%12||12;
-  setCard('fc-h',pad(h)); setCard('fc-m',pad(n.getMinutes()));
-  ap.textContent=clk12?apm:'24H';
+  if(tmode==='clock') { setCard('fc-h',pad(h)); setCard('fc-m',pad(n.getMinutes())); ap.textContent=clk12?apm:'24H'; }
   const tk=ymd(n), nowT=pad(n.getHours())+':'+pad(n.getMinutes());
   const cur=((data[tk]&&data[tk].tasks)||[]).filter(t=>t.time&&t.time<=nowT&&!t.done&&(!t.end||nowT<t.end)).sort((a,b)=>a.time.localeCompare(b.time)).pop();
   lab.textContent=cur?cur.text:'Focus mode';
@@ -782,6 +844,7 @@ document.addEventListener('fullscreenchange',updateFS);
 document.addEventListener('webkitfullscreenchange',updateFS);
 document.addEventListener('keydown',e=>{ const el=document.getElementById('clock'); if(e.key==='Escape'&&el.classList.contains('fake-fs')) { el.classList.remove('fake-fs'); updateFS(); } });
 document.querySelector('.clock-row').addEventListener('click',toggleFS);
+document.getElementById('precise').addEventListener('click',toggleFS);
 tick(); setInterval(tick,250);
 // ---- ZAXIRA va AVTO-SAQLASH
 function setStatus(t) { document.getElementById('data-status').textContent=t; }
