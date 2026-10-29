@@ -200,6 +200,12 @@
   #t-min { width: 72px; text-align: center; }
   .data-box { margin-top: 28px; background: var(--bg2); border: 0.5px solid var(--border); border-radius: 16px; padding: 18px 20px; display: flex; flex-direction: column; gap: 12px; }
   .data-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .task-row.locked { cursor: not-allowed; }
+  .task-row.missed .task-check { border-color: var(--accent3); color: var(--accent3); }
+  .task-row.missed .task-time { color: var(--accent3); background: transparent; }
+  .task-row.missed .task-text { color: var(--text3); }
+  .task-flag { display: block; font-style: normal; font-size: 10px; letter-spacing: .05em; color: var(--accent3); margin-top: 2px; }
+  .task-lock { margin-left: auto; font-size: 10px; opacity: .55; }
   .hint { font-size: 11px; color: var(--text3); align-self: center; }
   .actions { flex-wrap: wrap; }
   .rendered .day-card { animation: none; }
@@ -329,9 +335,9 @@
   <div class="modal-time" id="m-time"></div>
   <div class="modal-text" id="m-text"></div>
   <div class="modal-actions">
-    <button class="btn save" onclick="ringDone()">✓ Bajarildi</button>
-    <button class="btn" onclick="ringSnooze()">⏱ 5 daqiqa</button>
-    <button class="btn clear" onclick="stopRing()">To'xtatish</button>
+    <button class="btn save" id="m-done" onclick="ringDone()">✓ Bajarildi</button>
+    <button class="btn" id="m-snooze" onclick="ringSnooze()">⏱ 5 daqiqa</button>
+    <button class="btn clear" id="m-stop" onclick="ringClose()">To'xtatish</button>
   </div>
 </div></div>
 
@@ -485,34 +491,54 @@ function toggleAlarm() {
 function toggleBell(e,i,j) { e.stopPropagation(); ensureDay(i); const t=data[K(i)].tasks[j]; t.alarm=(t.alarm===false); persist(); render(); }
 function startRing(t,key,isEnd) {
   ringing={t,key,isEnd:!!isEnd};
-  document.getElementById('m-time').textContent=isEnd?t.end:t.time+(t.end?' – '+t.end:'');
-  document.getElementById('m-text').textContent=isEnd?'Vaqt tugadi: '+t.text:t.text;
+  const timer=t.id==='timer';
+  const head=isEnd?t.end:t.time;
+  const body=isEnd?'Vaqt tugadi: '+t.text:(timer?t.text:t.text+' boshlandi');
+  document.getElementById('m-time').textContent=head;
+  document.getElementById('m-text').textContent=body;
+  const show=(id,v)=>{ document.getElementById(id).style.display=v?'':'none'; };
+  show('m-done',timer||isEnd);
+  show('m-snooze',timer||isEnd);
+  show('m-stop',true);
+  document.getElementById('m-snooze').textContent=isEnd?'⏱ +5 daqiqa':'⏱ 5 daqiqa';
   document.getElementById('modal').classList.add('show');
-  document.title=(isEnd?'⌛ ':'⏰ ')+t.text;
+  document.title=(isEnd?'⌛ ':'⏰ ')+body;
   ensureAudio(); beep(); beepTimer=setInterval(beep,SOUNDS[curSound].gap);
-  ringStop=setTimeout(stopRing,90000);
-  try { if(alarmOn&&'Notification' in window&&Notification.permission==='granted') new Notification(isEnd?'⌛ '+t.end:'⏰ '+t.time,{body:(isEnd?'Vaqt tugadi: ':'')+t.text}); } catch(e){}
+  ringStop=setTimeout(()=>{ stopRing(); render(); },90000);
+  try { if(alarmOn&&'Notification' in window&&Notification.permission==='granted') new Notification((isEnd?'⌛ ':'⏰ ')+head,{body}); } catch(e){}
 }
 function stopRing() {
   clearInterval(beepTimer); clearTimeout(ringStop); ringing=null; stopCustom();
   document.getElementById('modal').classList.remove('show');
   document.title='Haftalik Rejalashtiruvchi';
 }
-function ringDone() { if(ringing){ ringing.t.done=true; persist(); } stopRing(); render(); }
+function ringClose() {
+  const wasEnd=ringing&&ringing.isEnd;
+  stopRing(); render();
+  if(wasEnd) showToast('⌛ Vazifa tugallanmagan deb belgilandi');
+}
+function ringDone() {
+  if(ringing&&ringing.isEnd) { ringing.t.done=true; persist(); showToast('✓ Bajarildi'); }
+  stopRing(); render();
+}
 function ringSnooze() {
-  if(ringing&&ringing.t.id==='timer'){ stopRing(); startTimerSec(300); return; }
-  if(ringing){ const d=new Date(Date.now()+5*60000); snoozed[ringing.t.id]={tm:pad(d.getHours())+':'+pad(d.getMinutes()),end:ringing.isEnd}; showToast('⏱ 5 daqiqadan keyin eslataman'); }
-  stopRing();
+  if(!ringing) return;
+  if(ringing.t.id==='timer') { stopRing(); startTimerSec(300); return; }
+  if(ringing.isEnd) {
+    const t=ringing.t, [h,m]=t.end.split(':').map(Number), cur=h*60+m, nxt=Math.min(cur+5,1439);
+    if(nxt===cur) { showToast('Kun oxiri: vaqt qo\'shib bo\'lmaydi'); return; }
+    t.end=pad(Math.floor(nxt/60))+':'+pad(nxt%60);
+    persist(); showToast('⏱ Tugash vaqti '+t.end+' gacha uzaytirildi');
+  }
+  stopRing(); render();
 }
 function checkAlarms() {
   if(ringing||!alarmOn) return;
   const now=new Date(), key=ymd(now), nm=now.getHours()*60+now.getMinutes();
   for (const t of ((data[key]&&data[key].tasks)||[])) {
     if(!t.time||t.done||t.alarm===false) continue;
-    const sz=snoozed[t.id];
     const list=[[t.time,false]];
     if(t.end) list.push([t.end,true]);
-    if(sz) list.push([sz.tm,sz.end]);
     for (const [tt,isEnd] of list) {
       const [h,m]=tt.split(':').map(Number), diff=nm-(h*60+m), fk=key+t.id+tt+(isEnd?'e':'s');
       if(diff>=0&&diff<=2&&!fired.has(fk)){ fired.add(fk); startRing(t,key,isEnd); return; }
@@ -527,7 +553,11 @@ function dayPct(i) {
   return Math.round(d.tasks.filter(t=>t.done).length/d.tasks.length*100);
 }
 
-function delTask(e,i,j) { e.stopPropagation(); ensureDay(i); data[K(i)].tasks.splice(j,1); persist(); render(); }
+function delTask(e,i,j) {
+  e.stopPropagation(); ensureDay(i);
+  if(isExpired(K(i),data[K(i)].tasks[j])) { showToast('🔒 Vaqti tugagan vazifani o\'chirib bo\'lmaydi'); return; }
+  data[K(i)].tasks.splice(j,1); persist(); render();
+}
 function sortedTasks(i) {
   return (data[K(i)].tasks||[]).map((t,j)=>({t,j})).sort((a,b)=>{
     if(!a.t.time&&!b.t.time) return a.j-b.j;
@@ -537,7 +567,21 @@ function sortedTasks(i) {
   });
 }
 function nowStr() { const n=new Date(); return n.getHours().toString().padStart(2,'0')+':'+n.getMinutes().toString().padStart(2,'0'); }
-function toggleTask(i,j) { ensureDay(i); data[K(i)].tasks[j].done=!data[K(i)].tasks[j].done; persist(); render(); }
+function isExpired(key,t) {
+  if(!t.end) return false;
+  const [y,mo,d]=key.split('-').map(Number), [h,m]=t.end.split(':').map(Number);
+  const endDt=new Date(y,mo-1,d,h,m,0), now=new Date();
+  if(endDt>now) return false;
+  if(ringing&&ringing.isEnd&&ringing.t.id===t.id) return false;
+  if(!t.done&&alarmOn&&t.alarm!==false&&!fired.has(key+t.id+t.end+'e')&&now-endDt<=2*60000) return false;
+  return true;
+}
+function toggleTask(i,j) {
+  ensureDay(i);
+  const t=data[K(i)].tasks[j];
+  if(isExpired(K(i),t)) { showToast('🔒 Vaqti tugagan: endi belgilab bo\'lmaydi'); render(); return; }
+  t.done=!t.done; persist(); render();
+}
 function addTask(i) {
   const inp=document.getElementById('ti-'+i);
   const v=inp.value.trim();
@@ -606,7 +650,7 @@ function render() {
     const box=document.getElementById('next-box');
     const n=nowStr();
     const tk=ymd(new Date());
-    const list=((data[tk]&&data[tk].tasks)||[]).filter(t=>t.time&&!t.done).sort((a,b)=>a.time.localeCompare(b.time)).map(t=>({t}));
+    const list=((data[tk]&&data[tk].tasks)||[]).filter(t=>t.time&&!t.done&&!isExpired(tk,t)).sort((a,b)=>a.time.localeCompare(b.time)).map(t=>({t}));
     const nxt=list.find(x=>x.t.time>=n)||list[list.length-1];
     if(!nxt){ box.innerHTML='<span class="next-label">Keyingi vazifa</span><span class="next-text" style="color:var(--text3)">Bugun uchun vaqtli vazifa yo\'q — kartaga vaqt va vazifa qo\'shing</span>'; return; }
     box.innerHTML='<span class="next-label">'+(nxt.t.time>=n?'Keyingi vazifa':'Kechikkan')+'</span><span class="next-time">'+nxt.t.time+(nxt.t.end?'–'+nxt.t.end:'')+'</span><span class="next-text">'+nxt.t.text.replace(/</g,'&lt;')+'</span>';
@@ -642,13 +686,13 @@ function render() {
         ${tod?'<div class="today-badge">Bugun</div>':''}
       </div>
       <div class="donut-center">${donut(pct)}</div>
-      <ul class="tasks-list">${sorted.map(({t,j})=>`
-        <li class="task-row${t.done?' done':''}${j===nowJ?' now':''}${t.end?' has-end':''}" onclick="toggleTask(${i},${j})">
-          <div class="task-check${t.done?' checked':''}">${t.done?'✓':''}</div>
+      <ul class="tasks-list">${sorted.map(({t,j})=>{ const ex=isExpired(K(i),t); return `
+        <li class="task-row${t.done?' done':''}${j===nowJ?' now':''}${t.end?' has-end':''}${ex?' locked':''}${ex&&!t.done?' missed':''}" onclick="toggleTask(${i},${j})">
+          <div class="task-check${t.done?' checked':''}">${t.done?'✓':(ex?'✕':'')}</div>
           <span class="task-time${t.time?'':' none'}">${t.time?(t.time+(t.end?'–'+t.end:'')):'--:--'}</span>
-          <span class="task-text">${t.text.replace(/</g,'&lt;')}</span>
-          ${t.time?`<span class="task-bell${t.alarm===false?' off':''}" onclick="toggleBell(event,${i},${j})" title="Budilnik">${t.alarm===false?'🔕':'🔔'}</span>`:''}<span class="task-del" onclick="delTask(event,${i},${j})" title="O'chirish">✕</span>
-        </li>`).join('')}</ul>
+          <span class="task-text">${t.text.replace(/</g,'&lt;')}${ex&&!t.done?'<em class="task-flag">Tugallanmagan</em>':''}</span>
+          ${t.time&&!ex?`<span class="task-bell${t.alarm===false?' off':''}" onclick="toggleBell(event,${i},${j})" title="Budilnik">${t.alarm===false?'🔕':'🔔'}</span>`:''}${ex?'<span class="task-lock" title="Qulflangan">🔒</span>':`<span class="task-del" onclick="delTask(event,${i},${j})" title="O'chirish">✕</span>`}
+        </li>`; }).join('')}</ul>
       <div class="add-box">
         <div class="time-row"><input class="time-input" type="time" id="tm-${i}" title="Boshlanish"/><span>—</span><input class="time-input" type="time" id="te-${i}" title="Tugash"/></div>
         <div class="add-row">
